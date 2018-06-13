@@ -1,0 +1,64 @@
+---
+swagger: "2.0"
+info:
+  version: "1.0"
+  title: 
+    Fn::Sub: apigw-swagger-go-example-${Stage}
+  description: 
+    Fn::Sub: apigw-swagger-go-example-${Stage}
+basePath: /
+schemes:
+  - "https"
+paths:
+  /:
+    get:
+      produces:
+        - text/plain
+      responses: 
+        '200':
+          description: OK
+      x-amazon-apigateway-integration:
+        responses:
+            default:
+              statusCode: 200
+        uri: 
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RootFunction.Arn}/invocations
+        passthroughBehavior: "when_no_match"
+        httpMethod: POST
+        type: aws_proxy
+  /hello:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - name: name
+          in: query
+          description: Your Name
+          required: true
+          type: string
+      responses: 
+        '200':
+          description: OK
+          schema:
+            $ref: "#/definitions/Message"
+        '400':
+          description: Bad request. User ID must be set.
+          schema:
+            $ref: "#/definitions/Message"
+      x-amazon-apigateway-integration:
+        responses:
+            default:
+              statusCode: 200
+            BAD.*:
+              statusCode: 400
+        uri: 
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloFunction.Arn}/invocations
+        passthroughBehavior: "when_no_match"
+        httpMethod: POST
+        type: aws_proxy
+definitions:
+  Message:
+    properties:
+      message:
+        type: string
+

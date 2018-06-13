@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: An example API written by Golang and defined with Swagger
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+  ArtifactBucket:
+    Type: String
+  SwaggerFile:
+    Type: String
+        
+Resources:
+  RootFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: go1.x
+      Handler: root
+      CodeUri: ./bin
+      Events:
+        RootHandler:
+          Type: Api
+          Properties:
+            RestApiId: !Ref  SampleApi
+            Path: '/'
+            Method: GET
+
+  HelloFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: go1.x
+      Handler: hello
+      CodeUri: ./bin
+      Events:
+        HelloHandler:
+          Type: Api
+          Properties:
+            RestApiId: !Ref SampleApi
+            Path: '/hello'
+            Method: GET
+
+  SampleApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Sub ${Stage}
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: !Sub s3://${ArtifactBucket}/${SwaggerFile}
+
+Outputs:
+  ApiUrl:
+    Description: URL of your API endpoint
+    Value: !Join
+      - ''
+      - - https://
+        - !Ref SampleApi
+        - '.execute-api.'
+        - !Ref 'AWS::Region'
+        - !Sub '.amazonaws.com/${Stage}'
